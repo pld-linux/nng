@@ -1,0 +1,12 @@
+diff -up nng-1.11/docs/man/CMakeLists.txt._orig nng-1.11/docs/man/CMakeLists.txt
+--- nng-1.11/docs/man/CMakeLists.txt._orig	2025-06-02 16:33:39.000000000 +0200
++++ nng-1.11/docs/man/CMakeLists.txt	2026-04-14 20:02:02.972653391 +0200
+@@ -46,7 +46,7 @@ if (NNG_ENABLE_DOC)
+ 
+         install(
+                 FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.${SECT}.html
+-                DESTINATION ${CMAKE_INSTALL_DOCDIR}
++                DESTINATION ${CMAKE_INSTALL_DOCDIR}/nng
+         )
+         install(
+                 FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.${SECT}
