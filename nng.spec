@@ -1,16 +1,17 @@
 # Conditional build:
-%bcond_with	tests		# build with tests
+%bcond_without	tests		# unit tests
 
 Summary:	Light-weight brokerless messaging
-Summary(pl.UTF-8):	-
+Summary(pl.UTF-8):	Lekka biblioteka komunikatów bez pośrednika
 Name:		nng
-Version:	1.11
-Release:	0.1
+Version:	1.12.4
+Release:	1
 License:	MIT
 Group:		Libraries
 Source0:	https://github.com/nanomsg/nng/archive/v%{version}/%{name}-%{version}.tar.gz
-# Source0-md5:	e901b96cbf0626076f2b05ffbc2012b8
+# Source0-md5:	da16997d0e92022248e4952eb9fc9d7f
 Patch0:		install.patch
+Patch1:		man-sections.patch
 URL:		https://nanomsg.github.io/nng/
 BuildRequires:	cmake
 BuildRequires:	mbedtls-devel
@@ -27,7 +28,18 @@ The communication patterns, also called "scalability protocols", are
 basic blocks for building distributed systems. By combining them you
 can create a vast array of distributed applications.
 
-%package  devel
+%description -l pl.UTF-8
+nng (nanomsg next generation) to biblioteka gniazd udostępniająca
+kilka popularnych wzorców komunikacji. Jej celem jest zapewnienie
+szybkiej, skalowalnej i łatwej w użyciu warstwy sieciowej. Jest
+napisana w C i działa na wielu systemach operacyjnych bez dodatkowych
+zależności.
+
+Wzorce komunikacji, zwane też "protokołami skalowalności", są
+podstawowymi elementami do budowy systemów rozproszonych. Łącząc je,
+można tworzyć różnorodne aplikacje rozproszone.
+
+%package devel
 Summary:	Header files for %{name} library
 Summary(pl.UTF-8):	Pliki nagłówkowe biblioteki %{name}
 Group:		Development/Libraries
@@ -38,30 +50,50 @@ This package contains files needed to develop applications using
 nanomsg, a socket library that provides several common communication
 patterns.
 
+%description devel -l pl.UTF-8
+Ten pakiet zawiera pliki potrzebne do tworzenia aplikacji
+wykorzystujących nng - bibliotekę gniazd udostępniającą kilka
+popularnych wzorców komunikacji.
+
 %package utils
 Summary:	Command line interface for communicating with nng
+Summary(pl.UTF-8):	Interfejs wiersza poleceń do komunikacji przez nng
+Group:		Applications/Networking
 Requires:	%{name} = %{version}-%{release}
 
 %description utils
 Includes nngcat, a simple utility for reading and writing to nanomsg
 sockets and bindings, which can include local and remote connections.
 
+%description utils -l pl.UTF-8
+Ten pakiet zawiera nngcat - proste narzędzie do odczytu i zapisu
+danych przez gniazda nanomsg, zarówno przy połączeniach lokalnych, jak
+i zdalnych.
+
 %prep
 %setup -q
 
 %patch -P0 -p1
+%patch -P1 -p1
 
 %build
 %cmake -B build \
 	-DBUILD_SHARED_LIBS=ON \
 	-DNNG_ENABLE_TLS=ON \
 	-DNNG_ENABLE_NNGCAT=ON \
-	-DNNG_TESTS=%{!?with_tests:OFF}%{?with_tests:ON} \
+	%{cmake_on_off tests NNG_TESTS} \
 	-DNNG_ENABLE_DOC=ON
 
 %{__make} -C build
 
-%{?with_tests:%{__make} -C build test ARGS=--output-on-failure}
+%if %{with tests}
+# talks to httpbin.org and other public servers
+ctest_exclude='^nng\.httpclient$'
+# getaddrinfo() with AI_ADDRCONFIG rejects even 127.0.0.1 when only loopback is configured
+ctest_exclude="$ctest_exclude|^nng\.(tls|platform\.resolver_test|sp\.transport\.(tcp|tls|ws)\..*|supplemental\.wssfile_test)$"
+# every test starts dozens of threads, parallel runs exhaust the task limit
+ctest --test-dir build --output-on-failure -E "$ctest_exclude"
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -78,7 +110,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc README.adoc UKRAINE.adoc LICENSE.txt
-%{_libdir}/libnng.so.1*
+%{_libdir}/libnng.so.*.*.*
+%ghost %{_libdir}/libnng.so.1
 
 %files devel
 %defattr(644,root,root,755)
@@ -86,7 +119,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/nng/
 %{_libdir}/libnng.so
 %{_libdir}/cmake/nng/
-%{_mandir}/man3/*.3.*
+%{_mandir}/man3/*.3*
 %{_mandir}/man5/*.5.*
 %{_mandir}/man7/*.7.*
 

@@ -1,0 +1,18 @@
+Install suffixed man sections (3http, 3tls, ...) into the base section directory
+instead of creating nonstandard man3http, man3tls, ... directories.
+
+--- nng-1.12.4/docs/man/CMakeLists.txt.orig	2026-09-29 22:58:53.879657887 +0200
++++ nng-1.12.4/docs/man/CMakeLists.txt	2026-09-29 22:58:53.953216755 +0200
+@@ -48,9 +48,11 @@
+                 FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.${SECT}.html
+                 DESTINATION ${CMAKE_INSTALL_DOCDIR}/nng
+         )
++        # 3http, 3tls etc. are suffixed forms of section 3 and go to man3
++        string(SUBSTRING "${SECT}" 0 1 _nng_man_base_sect)
+         install(
+                 FILES ${CMAKE_CURRENT_BINARY_DIR}/${NAME}.${SECT}
+-                DESTINATION ${CMAKE_INSTALL_MANDIR}/man${SECT}
++                DESTINATION ${CMAKE_INSTALL_MANDIR}/man${_nng_man_base_sect}
+         )
+ 
+     endmacro(nng_man)
