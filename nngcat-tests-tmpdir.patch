@@ -1,0 +1,136 @@
+nngcat test scripts hardcode /tmp and leave their ipc sockets behind; honour TMPDIR.
+
+diff -ur nng-1.12.4.orig/src/tools/nngcat/nngcat_async_test.sh nng-1.12.4/src/tools/nngcat/nngcat_async_test.sh
+--- nng-1.12.4.orig/src/tools/nngcat/nngcat_async_test.sh	2026-08-30 20:21:33.000000000 +0200
++++ nng-1.12.4/src/tools/nngcat/nngcat_async_test.sh	2026-09-30 07:28:50.166487928 +0200
+@@ -12,7 +12,7 @@
+ 
+ NNGCAT=${NNGCAT:=$1}
+ NNGCAT=${NNGCAT:-./nngcat}
+-ADDR="ipc:///tmp/nngcat_async_test"
++ADDR="ipc://${TMPDIR:-/tmp}/nngcat_async_test"
+ 
+ echo -n "Verify async connect: "
+ 
+diff -ur nng-1.12.4.orig/src/tools/nngcat/nngcat_incompat_test.sh nng-1.12.4/src/tools/nngcat/nngcat_incompat_test.sh
+--- nng-1.12.4.orig/src/tools/nngcat/nngcat_incompat_test.sh	2026-08-30 20:21:33.000000000 +0200
++++ nng-1.12.4/src/tools/nngcat/nngcat_incompat_test.sh	2026-09-30 07:28:50.166968459 +0200
+@@ -16,13 +16,13 @@
+ echo "Verify incompatible options: "
+ 
+ # Just bind something to this so other ones connect
+-${NNGCAT} --pull0 --ascii -X /tmp/bogusipc &
++${NNGCAT} --pull0 --ascii -X ${TMPDIR:-/tmp}/bogusipc &
+ pid=$!
+ 
+ trap "kill $pid && wait $pid 2>/dev/null" 0
+ 
+ echo -n "    --subscribe doesn't work with non-sub"
+-if ${NNGCAT} --req0 -x /tmp/bogusipc --subscribe=oops >/dev/null 2>&1
++if ${NNGCAT} --req0 -x ${TMPDIR:-/tmp}/bogusipc --subscribe=oops >/dev/null 2>&1
+ then
+ 	echo "fail"
+ 	exit 1
+@@ -30,7 +30,7 @@
+ echo "pass"
+ 
+ echo -n "    --interval doesn't work with recv only: "
+-if ${NNGCAT} --interval 1 --pull -x /tmp/bogusipc >/dev/null 2>&1
++if ${NNGCAT} --interval 1 --pull -x ${TMPDIR:-/tmp}/bogusipc >/dev/null 2>&1
+ then
+ 	echo "fail"
+ 	exit 1
+@@ -38,7 +38,7 @@
+ echo "pass"
+ 
+ echo -n "    --pair1 doesn't work with --compat: "
+-if ${NNGCAT} --compat --pair1 -x /tmp/bogusipc >/dev/null 2>&1
++if ${NNGCAT} --compat --pair1 -x ${TMPDIR:-/tmp}/bogusipc >/dev/null 2>&1
+ then
+ 	echo "fail"
+ 	exit 1
+@@ -46,7 +46,7 @@
+ echo "pass"
+ 
+ echo -n "    --count doesn't work with --compat: "
+-if ${NNGCAT} --compat --count=1 --pair0 -x /tmp/bogusipc >/dev/null 2>&1
++if ${NNGCAT} --compat --count=1 --pair0 -x ${TMPDIR:-/tmp}/bogusipc >/dev/null 2>&1
+ then
+ 	echo "fail"
+ 	exit 1
+@@ -54,7 +54,7 @@
+ echo "pass"
+ 
+ echo -n "    --count fails with non-integer: "
+-if ${NNGCAT} --count=xyz --pair0 -x /tmp/bogusipc >/dev/null 2>&1
++if ${NNGCAT} --count=xyz --pair0 -x ${TMPDIR:-/tmp}/bogusipc >/dev/null 2>&1
+ then
+ 	echo "fail"
+ 	exit 1
+@@ -62,7 +62,7 @@
+ echo "pass"
+ 
+ echo -n "    --file fails with non-existing file: "
+-if ${NNGCAT} --async --file=/nosuchfilehere --push0 -x /tmp/bogusipc >/dev/null 2>&1
++if ${NNGCAT} --async --file=/nosuchfilehere --push0 -x ${TMPDIR:-/tmp}/bogusipc >/dev/null 2>&1
+ then
+ 	echo "fail"
+ 	exit 1
+diff -ur nng-1.12.4.orig/src/tools/nngcat/nngcat_pubsub_test.sh nng-1.12.4/src/tools/nngcat/nngcat_pubsub_test.sh
+--- nng-1.12.4.orig/src/tools/nngcat/nngcat_pubsub_test.sh	2026-08-30 20:21:33.000000000 +0200
++++ nng-1.12.4/src/tools/nngcat/nngcat_pubsub_test.sh	2026-09-30 07:28:50.166841214 +0200
+@@ -12,8 +12,8 @@
+ 
+ NNGCAT=${NNGCAT:=$1}
+ NNGCAT=${NNGCAT:-./nngcat}
+-ADDR="ipc:///tmp/nngcat_pub_sub_test"
+-OUTPUT=/tmp/nngcat_pubsub_test.$$.out
++ADDR="ipc://${TMPDIR:-/tmp}/nngcat_pub_sub_test"
++OUTPUT=${TMPDIR:-/tmp}/nngcat_pubsub_test.$$.out
+ 
+ echo -n "Verify pub sub: "
+ 
+diff -ur nng-1.12.4.orig/src/tools/nngcat/nngcat_recvmaxsz_test.sh nng-1.12.4/src/tools/nngcat/nngcat_recvmaxsz_test.sh
+--- nng-1.12.4.orig/src/tools/nngcat/nngcat_recvmaxsz_test.sh	2026-08-30 20:21:33.000000000 +0200
++++ nng-1.12.4/src/tools/nngcat/nngcat_recvmaxsz_test.sh	2026-09-30 07:28:50.166726268 +0200
+@@ -12,8 +12,8 @@
+ 
+ NNGCAT=${NNGCAT:=$1}
+ NNGCAT=${NNGCAT:-./nngcat}
+-ADDR="ipc:///tmp/nngcat_recvmaxsz_test"
+-OUTPUT=/tmp/nngcat_recvmaxsz_test.$$.out
++ADDR="ipc://${TMPDIR:-/tmp}/nngcat_recvmaxsz_test"
++OUTPUT=${TMPDIR:-/tmp}/nngcat_recvmaxsz_test.$$.out
+ 
+ echo -n "Verify maximum receive size: "
+ 
+diff -ur nng-1.12.4.orig/src/tools/nngcat/nngcat_stdin_pipe_test.sh nng-1.12.4/src/tools/nngcat/nngcat_stdin_pipe_test.sh
+--- nng-1.12.4.orig/src/tools/nngcat/nngcat_stdin_pipe_test.sh	2026-08-30 20:21:33.000000000 +0200
++++ nng-1.12.4/src/tools/nngcat/nngcat_stdin_pipe_test.sh	2026-09-30 07:28:50.167100581 +0200
+@@ -13,8 +13,8 @@
+ 
+ NNGCAT=${NNGCAT:=$1}
+ NNGCAT=${NNGCAT:-./nngcat}
+-ADDR="ipc:///tmp/nngcat_stdin_pipe_test"
+-OUTPUT=/tmp/nngcat_stdin_pipe_test.$$.out
++ADDR="ipc://${TMPDIR:-/tmp}/nngcat_stdin_pipe_test"
++OUTPUT=${TMPDIR:-/tmp}/nngcat_stdin_pipe_test.$$.out
+ 
+ echo -n "Verify reading from stdin pipe: "
+ 
+diff -ur nng-1.12.4.orig/src/tools/nngcat/nngcat_unlimited_test.sh nng-1.12.4/src/tools/nngcat/nngcat_unlimited_test.sh
+--- nng-1.12.4.orig/src/tools/nngcat/nngcat_unlimited_test.sh	2026-08-30 20:21:33.000000000 +0200
++++ nng-1.12.4/src/tools/nngcat/nngcat_unlimited_test.sh	2026-09-30 07:28:50.167202638 +0200
+@@ -12,9 +12,9 @@
+ 
+ NNGCAT=${NNGCAT:=$1}
+ NNGCAT=${NNGCAT:-./nngcat}
+-ADDR="ipc:///tmp/nngcat_unlimited_test"
+-INPUT=/tmp/nngcat_unlimited_test.$$.in
+-OUTPUT=/tmp/nngcat_unlimited_test.$$.out
++ADDR="ipc://${TMPDIR:-/tmp}/nngcat_unlimited_test"
++INPUT=${TMPDIR:-/tmp}/nngcat_unlimited_test.$$.in
++OUTPUT=${TMPDIR:-/tmp}/nngcat_unlimited_test.$$.out
+ 
+ echo -n "Verify unlimited receive size: "
+ 

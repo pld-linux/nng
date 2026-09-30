@@ -12,6 +12,7 @@ Source0:	https://github.com/nanomsg/nng/archive/v%{version}/%{name}-%{version}.t
 # Source0-md5:	da16997d0e92022248e4952eb9fc9d7f
 Patch0:		install.patch
 Patch1:		man-sections.patch
+Patch2:		nngcat-tests-tmpdir.patch
 URL:		https://nanomsg.github.io/nng/
 BuildRequires:	cmake
 BuildRequires:	mbedtls-devel
@@ -75,6 +76,7 @@ i zdalnych.
 
 %patch -P0 -p1
 %patch -P1 -p1
+%patch -P2 -p1
 
 %build
 %cmake -B build \
@@ -87,6 +89,9 @@ i zdalnych.
 %{__make} -C build
 
 %if %{with tests}
+# ipc sockets and scratch files of the tests stay inside the build tree
+export TMPDIR=$(pwd)/tests-tmp
+install -d $TMPDIR
 # talks to httpbin.org and other public servers
 ctest_exclude='^nng\.httpclient$'
 # getaddrinfo() with AI_ADDRCONFIG rejects even 127.0.0.1 when only loopback is configured
